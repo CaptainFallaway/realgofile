@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 )
 
 const deleteUserByUsername = `-- name: deleteUserByUsername :exec
@@ -25,10 +26,10 @@ VALUES (?, ?, ?, ?)
 `
 
 type insertUserParams struct {
-	Username  string `json:"username"`
-	Password  []byte `json:"password"`
-	Salt      []byte `json:"salt"`
-	CreatedAt int64  `json:"created_at"`
+	Username  string    `json:"username"`
+	Password  []byte    `json:"password"`
+	Salt      []byte    `json:"salt"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // this is a sqlite3 queries file
@@ -63,11 +64,11 @@ UPDATE users SET username = ?, password = ?, salt = ?, created_at = ? WHERE user
 `
 
 type updateUserParams struct {
-	Username   string `json:"username"`
-	Password   []byte `json:"password"`
-	Salt       []byte `json:"salt"`
-	CreatedAt  int64  `json:"created_at"`
-	Username_2 string `json:"username_2"`
+	Username   string    `json:"username"`
+	Password   []byte    `json:"password"`
+	Salt       []byte    `json:"salt"`
+	CreatedAt  time.Time `json:"created_at"`
+	Username_2 string    `json:"username_2"`
 }
 
 func (q *Queries) updateUser(ctx context.Context, arg updateUserParams) error {
