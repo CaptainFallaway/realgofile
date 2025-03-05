@@ -2,11 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/CaptainFallaway/realgofile/internal/database"
-	"github.com/CaptainFallaway/realgofile/pkg/hasher"
+	"github.com/CaptainFallaway/realgofile/pkg/hashing"
 )
 
 func main() {
@@ -15,14 +14,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	h := hasher.NewArgonBcryptHasher()
+	h := hashing.NewArgonBcryptHasher()
 
-	user, err := storage.GetUserByUsername(context.TODO(), "captainfallaway")
+	user, err := storage.GetUserByUsername(context.TODO(), "capnroot")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(user)
-
-	fmt.Println(h.Compare("password", user.Salt, user.Password))
+	log.Println(user.Username)
+	log.Println(h.Compare("password", user.Salt, user.Password))
 }
