@@ -4,13 +4,8 @@
 
 package database
 
-import (
-	"time"
-)
-
 type User struct {
-	Username  string    `json:"username"`
-	Password  []byte    `json:"password"`
-	Salt      []byte    `json:"salt"`
-	CreatedAt time.Time `json:"created_at"`
+	Username string `json:"username"`
+	Password []byte `json:"password"`
+	Salt     []byte `json:"salt"`
 }

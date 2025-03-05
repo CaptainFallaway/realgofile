@@ -3,8 +3,7 @@
 CREATE TABLE IF NOT EXISTS users (
     username TEXT NOT NULL PRIMARY KEY,
     password BLOB NOT NULL,
-    salt BLOB NOT NULL,
-    created_at DATETIME NOT NULL
+    salt BLOB NOT NULL
 )
 -- +goose StatementEnd
 

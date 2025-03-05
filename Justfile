@@ -24,5 +24,8 @@ migrate-up:
 migrate-down:
   go tool goose down  
 
+sqlite:
+  sqlite3 ./data/db.sqlite3
+
 new-migraition MIGRATION_NAME:
   go tool goose create {{MIGRATION_NAME}} sql

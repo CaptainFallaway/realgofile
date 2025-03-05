@@ -7,68 +7,82 @@ package database
 
 import (
 	"context"
-	"time"
 )
 
-const deleteUserByUsername = `-- name: deleteUserByUsername :exec
+const deleteUser = `-- name: DeleteUser :exec
 DELETE FROM users WHERE username = ?
 `
 
-func (q *Queries) deleteUserByUsername(ctx context.Context, username string) error {
-	_, err := q.db.ExecContext(ctx, deleteUserByUsername, username)
+func (q *Queries) DeleteUser(ctx context.Context, username string) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, username)
 	return err
+}
+
+const getAllUsers = `-- name: GetAllUsers :many
+SELECT username, password, salt FROM users
+`
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(&i.Username, &i.Password, &i.Salt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT username, password, salt FROM users WHERE username = ?
+`
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i User
+	err := row.Scan(&i.Username, &i.Password, &i.Salt)
+	return i, err
 }
 
 const insertUser = `-- name: insertUser :exec
 
-INSERT INTO users (username, password, salt, created_at)
-VALUES (?, ?, ?, ?)
+INSERT INTO users (username, password, salt)
+VALUES (?, ?, ?)
 `
 
 type insertUserParams struct {
-	Username  string    `json:"username"`
-	Password  []byte    `json:"password"`
-	Salt      []byte    `json:"salt"`
-	CreatedAt time.Time `json:"created_at"`
+	Username string `json:"username"`
+	Password []byte `json:"password"`
+	Salt     []byte `json:"salt"`
 }
 
 // this is a sqlite3 queries file
 func (q *Queries) insertUser(ctx context.Context, arg insertUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertUser,
-		arg.Username,
-		arg.Password,
-		arg.Salt,
-		arg.CreatedAt,
-	)
+	_, err := q.db.ExecContext(ctx, insertUser, arg.Username, arg.Password, arg.Salt)
 	return err
 }
 
-const selectUserByUsername = `-- name: selectUserByUsername :one
-SELECT username, password, salt, created_at FROM users WHERE username = ?
-`
-
-func (q *Queries) selectUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, selectUserByUsername, username)
-	var i User
-	err := row.Scan(
-		&i.Username,
-		&i.Password,
-		&i.Salt,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
 const updateUser = `-- name: updateUser :exec
-UPDATE users SET username = ?, password = ?, salt = ?, created_at = ? WHERE username = ?
+UPDATE users SET username = ?, password = ?, salt = ? WHERE username = ?
 `
 
 type updateUserParams struct {
-	Username   string    `json:"username"`
-	Password   []byte    `json:"password"`
-	Salt       []byte    `json:"salt"`
-	CreatedAt  time.Time `json:"created_at"`
-	Username_2 string    `json:"username_2"`
+	Username   string `json:"username"`
+	Password   []byte `json:"password"`
+	Salt       []byte `json:"salt"`
+	Username_2 string `json:"username_2"`
 }
 
 func (q *Queries) updateUser(ctx context.Context, arg updateUserParams) error {
@@ -76,7 +90,6 @@ func (q *Queries) updateUser(ctx context.Context, arg updateUserParams) error {
 		arg.Username,
 		arg.Password,
 		arg.Salt,
-		arg.CreatedAt,
 		arg.Username_2,
 	)
 	return err
