@@ -1,4 +1,4 @@
-package hasher
+package hashing
 
 import (
 	"crypto/rand"
@@ -14,14 +14,8 @@ type Hasher interface {
 	Compare(plain string, hashed []byte) bool
 }
 
-func GenerateSalt(saltSize uint8) ([]byte, error) {
-	var salt = make([]byte, saltSize)
-
-	_, err := rand.Read(salt[:])
-
-	if err != nil {
-		return nil, err
-	}
-
-	return salt, nil
+func GenerateSalt(saltSize uint8) []byte {
+	salt := make([]byte, saltSize)
+	rand.Read(salt[:])
+	return salt
 }
