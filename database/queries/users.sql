@@ -1,11 +1,9 @@
--- this is a sqlite3 queries file
-
 -- name: insertUser :exec
-INSERT INTO users (username, password, salt)
-VALUES (?, ?, ?);
+INSERT INTO users (uid, username, password, salt)
+VALUES (?, ?, ?, ?);
 
 -- name: updateUser :exec
-UPDATE users SET username = ?, password = ?, salt = ? WHERE username = ?;
+UPDATE users SET username = ?, password = ?, salt = ? WHERE uid = ?;
 
 -- name: GetAllUsers :many
 SELECT * FROM users;
@@ -13,5 +11,8 @@ SELECT * FROM users;
 -- name: GetUserByUsername :one
 SELECT * FROM users WHERE username = ?;
 
+-- name: GetUserByUid :one
+SELECT * FROM users WHERE uid = ?;
+
 -- name: DeleteUser :exec
-DELETE FROM users WHERE username = ?;
+DELETE FROM users WHERE uid = ?;

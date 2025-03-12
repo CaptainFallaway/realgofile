@@ -16,6 +16,6 @@ type Hasher interface {
 
 func GenerateSalt(saltSize uint8) []byte {
 	salt := make([]byte, saltSize)
-	rand.Read(salt[:])
+	rand.Read(salt[:]) // yay ignoring more errors
 	return salt
 }

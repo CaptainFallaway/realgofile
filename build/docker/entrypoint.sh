@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-mkdir -p /app/data
-goose sqlite3 ${DBPATH} -dir=migrations up
+mkdir -p /data
+goose sqlite3 $DBSTRING -dir=migrations up
 
-exec /app/bin
+exec ./bin

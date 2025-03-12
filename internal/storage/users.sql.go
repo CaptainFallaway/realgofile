@@ -3,23 +3,23 @@
 //   sqlc v1.28.0
 // source: users.sql
 
-package database
+package storage
 
 import (
 	"context"
 )
 
 const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM users WHERE username = ?
+DELETE FROM users WHERE uid = ?
 `
 
-func (q *Queries) DeleteUser(ctx context.Context, username string) error {
-	_, err := q.db.ExecContext(ctx, deleteUser, username)
+func (q *Queries) DeleteUser(ctx context.Context, uid string) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, uid)
 	return err
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT username, password, salt FROM users
+SELECT uid, username, password, salt FROM users
 `
 
 func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
@@ -31,7 +31,12 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 	var items []User
 	for rows.Next() {
 		var i User
-		if err := rows.Scan(&i.Username, &i.Password, &i.Salt); err != nil {
+		if err := rows.Scan(
+			&i.Uid,
+			&i.Username,
+			&i.Password,
+			&i.Salt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -45,44 +50,69 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
+const getUserByUid = `-- name: GetUserByUid :one
+SELECT uid, username, password, salt FROM users WHERE uid = ?
+`
+
+func (q *Queries) GetUserByUid(ctx context.Context, uid string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUid, uid)
+	var i User
+	err := row.Scan(
+		&i.Uid,
+		&i.Username,
+		&i.Password,
+		&i.Salt,
+	)
+	return i, err
+}
+
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT username, password, salt FROM users WHERE username = ?
+SELECT uid, username, password, salt FROM users WHERE username = ?
 `
 
 func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
 	var i User
-	err := row.Scan(&i.Username, &i.Password, &i.Salt)
+	err := row.Scan(
+		&i.Uid,
+		&i.Username,
+		&i.Password,
+		&i.Salt,
+	)
 	return i, err
 }
 
 const insertUser = `-- name: insertUser :exec
-
-INSERT INTO users (username, password, salt)
-VALUES (?, ?, ?)
+INSERT INTO users (uid, username, password, salt)
+VALUES (?, ?, ?, ?)
 `
 
 type insertUserParams struct {
+	Uid      string `json:"uid"`
 	Username string `json:"username"`
 	Password []byte `json:"password"`
 	Salt     []byte `json:"salt"`
 }
 
-// this is a sqlite3 queries file
 func (q *Queries) insertUser(ctx context.Context, arg insertUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertUser, arg.Username, arg.Password, arg.Salt)
+	_, err := q.db.ExecContext(ctx, insertUser,
+		arg.Uid,
+		arg.Username,
+		arg.Password,
+		arg.Salt,
+	)
 	return err
 }
 
 const updateUser = `-- name: updateUser :exec
-UPDATE users SET username = ?, password = ?, salt = ? WHERE username = ?
+UPDATE users SET username = ?, password = ?, salt = ? WHERE uid = ?
 `
 
 type updateUserParams struct {
-	Username   string `json:"username"`
-	Password   []byte `json:"password"`
-	Salt       []byte `json:"salt"`
-	Username_2 string `json:"username_2"`
+	Username string `json:"username"`
+	Password []byte `json:"password"`
+	Salt     []byte `json:"salt"`
+	Uid      string `json:"uid"`
 }
 
 func (q *Queries) updateUser(ctx context.Context, arg updateUserParams) error {
@@ -90,7 +120,7 @@ func (q *Queries) updateUser(ctx context.Context, arg updateUserParams) error {
 		arg.Username,
 		arg.Password,
 		arg.Salt,
-		arg.Username_2,
+		arg.Uid,
 	)
 	return err
 }

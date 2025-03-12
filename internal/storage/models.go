@@ -2,9 +2,10 @@
 // versions:
 //   sqlc v1.28.0
 
-package database
+package storage
 
 type User struct {
+	Uid      string `json:"uid"`
 	Username string `json:"username"`
 	Password []byte `json:"password"`
 	Salt     []byte `json:"salt"`

@@ -1,4 +1,4 @@
-package database
+package storage
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 )
 
 type sqliteRepo struct {
+	db *sql.DB
 	*Queries
 }
 
@@ -23,6 +24,7 @@ func NewSqliteRepo(dbPath string) (Repository, error) {
 	}
 
 	return &sqliteRepo{
+		db:      db,
 		Queries: New(db),
 	}, nil
 }
@@ -31,12 +33,12 @@ func (r *sqliteRepo) InsertUser(ctx context.Context, user User) error {
 	return r.insertUser(ctx, insertUserParams(user))
 }
 
-func (r *sqliteRepo) UpdateUser(ctx context.Context, username string, user User) error {
+func (r *sqliteRepo) UpdateUser(ctx context.Context, uid string, user User) error {
 	params := updateUserParams{
-		Username:   user.Username,
-		Password:   user.Password,
-		Salt:       user.Salt,
-		Username_2: username,
+		Username: user.Username,
+		Password: user.Password,
+		Salt:     user.Salt,
+		Uid:      uid,
 	}
 	return r.updateUser(ctx, params)
 }

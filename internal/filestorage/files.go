@@ -10,6 +10,14 @@ func NewDirectoryStorage(basePath string) FileStorage {
 	return &directoryStorage{basePath: basePath}
 }
 
-func (fs *directoryStorage) NewTransaction() (io.WriteCloser, error) {
+func (ds *directoryStorage) Delete(uid string) error {
+	return nil
+}
+
+func (ds *directoryStorage) NewWriteTransaction(uid string) (io.WriteCloser, error) {
+	return nil, nil
+}
+
+func (ds *directoryStorage) NewReadTransaction(uid string) (io.ReadCloser, error) {
 	return nil, nil
 }

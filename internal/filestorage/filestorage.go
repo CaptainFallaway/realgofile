@@ -3,5 +3,7 @@ package filestorage
 import "io"
 
 type FileStorage interface {
-	NewTransaction() (io.WriteCloser, error)
+	Delete(uid string) error
+	NewWriteTransaction(uid string) (io.WriteCloser, error)
+	NewReadTransaction(uid string) (io.ReadCloser, error)
 }

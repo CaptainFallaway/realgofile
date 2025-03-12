@@ -1,7 +1,8 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS users (
-    username TEXT NOT NULL PRIMARY KEY,
+    uid TEXT NOT NULL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
     password BLOB NOT NULL,
     salt BLOB NOT NULL
 )

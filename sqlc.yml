@@ -6,8 +6,8 @@ sql:
     gen:
       go:
         emit_json_tags: true
-        package: "database"
-        out: "./internal/database"
+        package: "storage"
+        out: "./internal/storage"
         overrides:
           - db_type: "DATETIME"
             go_type:
