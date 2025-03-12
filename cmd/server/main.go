@@ -1,10 +1,10 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 
+	"github.com/CaptainFallaway/realgofile/internal/config"
 	"github.com/CaptainFallaway/realgofile/internal/controllers"
 	"github.com/CaptainFallaway/realgofile/internal/services"
 	"github.com/CaptainFallaway/realgofile/internal/storage"
@@ -15,15 +15,18 @@ import (
 
 const addr = "0.0.0.0:3000"
 
+var conf = &config.Config{
+	Addr:     ":3000",
+	Debug:    true,
+	DbString: "./data/db.sqlite3",
+}
+
 func main() {
-	logger := logging.NewCharmLogger(os.Stdout)
+	config.LoadEnv(conf)
 
-	path, exist := os.LookupEnv("DBSTRING")
-	if !exist {
-		log.Fatal("db path not in env")
-	}
+	logger := logging.NewCharmLogger(os.Stdout, conf.Debug)
 
-	repo, err := storage.NewSqliteRepo(path)
+	repo, err := storage.NewSqliteRepo(conf.DbString)
 	if err != nil {
 		logger.Fatal(err)
 	}
