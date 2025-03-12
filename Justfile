@@ -3,8 +3,8 @@ export GOOSE_DBSTRING := "./data/db.sqlite3"
 export GOOSE_MIGRATION_DIR := "./database/migrations"
 
 export DBSTRING := GOOSE_DBSTRING
-
-export PORT := "3000"
+export ADDR := ":3000"
+export DEBUG := "true"
 
 DOCKERFILE := "./build/docker/Dockerfile"
 
