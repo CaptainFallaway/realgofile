@@ -12,7 +12,7 @@ default:
   just run server
 
 dev APP="server":
-  air --build.cmd "CGO_ENABLED=0 go build -o ./tmp/main ./cmd/{{APP}}/*"
+  air --build.cmd "CGO_ENABLED=0 go build -o ./tmp/{{APP}} ./cmd/{{APP}}/*" --build.bin "./tmp/{{APP}}"
 
 run APP *ARGS:
   @mkdir -p tmp

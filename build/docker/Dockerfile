@@ -19,8 +19,6 @@ ENV DBPATH=/data/db.sqlite3
 RUN mkdir -p /data
 VOLUME ["/data"]
 
-# Actual prod
-
 WORKDIR /app
 
 COPY --from=builder /go/bin/goose /usr/local/bin/goose
