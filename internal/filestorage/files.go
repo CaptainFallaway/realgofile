@@ -2,22 +2,22 @@ package filestorage
 
 import "io"
 
-type directoryStorage struct {
+type commonStorage struct {
 	basePath string
 }
 
 func NewDirectoryStorage(basePath string) FileStorage {
-	return &directoryStorage{basePath: basePath}
+	return &commonStorage{basePath: basePath}
 }
 
-func (ds *directoryStorage) Delete(uid string) error {
+func (ds *commonStorage) Delete(uid string) error {
 	return nil
 }
 
-func (ds *directoryStorage) NewWriteTransaction(uid string) (io.WriteCloser, error) {
+func (ds *commonStorage) NewWriteTransaction(uid string) (io.WriteCloser, error) {
 	return nil, nil
 }
 
-func (ds *directoryStorage) NewReadTransaction(uid string) (io.ReadCloser, error) {
+func (ds *commonStorage) NewReadTransaction(uid string) (io.ReadCloser, error) {
 	return nil, nil
 }
