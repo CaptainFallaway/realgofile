@@ -13,8 +13,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const addr = "0.0.0.0:3000"
-
 var conf = &config.Config{
 	Addr:     ":3000",
 	Debug:    true,
@@ -24,7 +22,7 @@ var conf = &config.Config{
 func main() {
 	config.LoadEnv(conf)
 
-	logger := logging.NewCharmLogger(os.Stdout, conf.Debug)
+	logger := logging.NewCharmLogger(os.Stderr, conf.Debug)
 
 	repo, err := storage.NewSqliteRepo(conf.DbString)
 	if err != nil {
@@ -43,8 +41,8 @@ func main() {
 
 	r.Route("/user", userController.SetupRoutes)
 
-	logger.Info("server starting", "addr", addr)
-	err = http.ListenAndServe(addr, r)
+	logger.Info("server starting", "addr", conf.Addr)
+	err = http.ListenAndServe(conf.Addr, r)
 	if err != nil {
 		logger.Fatal(err)
 	}
