@@ -36,15 +36,13 @@ func (u *userController) Login(w http.ResponseWriter, r *http.Request) error {
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	u.logger.Debug("login", "user", username, "pass", password)
-
 	verified, err := u.authService.Login(r.Context(), r.RemoteAddr, username, password)
 	if err != nil {
 		WriteError(w, "not authorized", http.StatusForbidden)
 		return err
 	}
 
-	u.logger.Info("successful login", "user", username, "ip", r.RemoteAddr)
+	u.logger.Debug("successful login", "user", username, "ip", r.RemoteAddr)
 
 	_, err = fmt.Fprint(w, verified)
 
@@ -61,14 +59,12 @@ func (u *userController) Register(w http.ResponseWriter, r *http.Request) error 
 	username := r.Form.Get("username")
 	password := r.Form.Get("password")
 
-	u.logger.Debug("register", "user", username, "pass", password, "ip", r.RemoteAddr)
-
 	err = u.authService.Register(r.Context(), username, password)
 	if err != nil {
 		WriteError(w, "unable to register", http.StatusInternalServerError)
 	}
 
-	u.logger.Info("successful registration", "user", username, "ip", r.RemoteAddr)
+	u.logger.Debug("successful registration", "user", username, "ip", r.RemoteAddr)
 
 	return err
 }
