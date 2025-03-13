@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/CaptainFallaway/realgofile/pkg/common"
+	"github.com/CaptainFallaway/realgofile/pkg/helpers"
 )
 
 type Config struct {
@@ -11,7 +11,7 @@ type Config struct {
 }
 
 func LoadEnv(conf *Config) {
-	conf.Addr = common.GetEnvVar("ADDR", conf.Addr)
-	conf.Debug = common.GetEnvVar("DEBUG", conf.Debug)
-	conf.DbString = common.GetEnvVar("DBSTRING", conf.DbString)
+	conf.Addr = helpers.GetEnvVar("ADDR", conf.Addr)
+	conf.Debug = helpers.GetEnvVar("DEBUG", conf.Debug)
+	conf.DbString = helpers.GetEnvVar("DBSTRING", conf.DbString)
 }
