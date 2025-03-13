@@ -37,7 +37,7 @@ func (au *AuthService) Login(ctx context.Context, ip, username, password string)
 		return "", ErrUnauthorized
 	}
 
-	token, err := au.sessions.NewSession(username, ip)
+	token, err := au.sessions.GetSessionToken(username)
 	if err != nil {
 		return "", err
 	}

@@ -1,93 +1,100 @@
 package services
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
-	"fmt"
+	"sync"
 	"time"
 
 	"github.com/CaptainFallaway/realgofile/pkg/logging"
-	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 )
 
-const (
-	expiryDuration = time.Duration(30 * time.Minute)
-	rsaKeySize     = 2048
-)
+// TODO: Idea: Instead of the implementation i have how about we create a object for each user so that I can bind tokens to the user directly and not only that see if theres state that one of the tokens are being used for a file upload.
+
+const sessionDuration = time.Duration(10 * time.Minute)
+
+type Session struct {
+	Token     string    `json:"token"`
+	UserId    string    `json:"uid"`
+	Expiry    time.Time `json:"expiry"`
+	CreatedAt time.Time `json:"created_at"`
+}
 
 type SessionService struct {
-	key    *rsa.PrivateKey
-	issuer string
-
 	logger logging.Logger
+
+	mux      sync.Mutex
+	sessions map[string]*Session // I should take a deeper look into the sync.Map implementation
 }
 
-// NewSessionService might panic if the generation of the rsa private key is not successful
 func NewSessionService(logger logging.Logger) *SessionService {
-	key, err := rsa.GenerateKey(rand.Reader, rsaKeySize)
-	if err != nil {
-		panic(err)
+	return &SessionService{
+		logger:   logger,
+		sessions: make(map[string]*Session),
 	}
-
-	issuer := fmt.Sprintf("realgofile-%x", time.Now().Unix())
-
-	return &SessionService{key, issuer, logger}
 }
 
-type jwtClaims struct {
-	Uid string `json:"uid"`
-	Ip  string `json:"ip"`
-	jwt.RegisteredClaims
-}
-
-func (ss *SessionService) keyFunc(token *jwt.Token) (interface{}, error) {
-	if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-		return nil, fmt.Errorf("unexpected jwt signing method: %v", token.Header["alg"])
-	}
-
-	return ss.key, nil
-}
-
-// CreateSession returns a jwt that should be used for cookie based auth.
-func (ss *SessionService) NewSession(uid, ip string) (string, error) {
-	expiration := jwt.NewNumericDate(time.Now().Add(expiryDuration))
-
-	claims := &jwtClaims{
-		uid,
-		ip,
-		jwt.RegisteredClaims{
-			ExpiresAt: expiration,
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
-
-	t := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	token, err := t.SignedString(ss.key)
+func (ss *SessionService) newSession(uid string) (string, error) {
+	token, err := uuid.NewV7()
 	if err != nil {
 		return "", nil
 	}
 
-	return token, nil
+	now := time.Now()
+
+	session := &Session{
+		Token:     token.String(),
+		UserId:    uid,
+		Expiry:    now.Add(sessionDuration),
+		CreatedAt: now,
+	}
+
+	ss.mux.Lock()
+	defer ss.mux.Unlock()
+
+	ss.sessions[token.String()] = session
+
+	return token.String(), nil
 }
 
-func (ss *SessionService) ProcessToken(sessionToken string) (bool, string) {
-	token, err := jwt.ParseWithClaims(sessionToken, &jwtClaims{}, ss.keyFunc, jwt.WithIssuer(ss.issuer), jwt.WithExpirationRequired())
-	if err != nil {
-		ss.logger.Error("jwt parse", "err", err)
-		return false, ""
+// GetSessionToken will return a new session token or a already existing session token for the user.
+func (ss *SessionService) GetSessionToken(uid string) (string, error) {
+	session := ss.GetSession(uid)
+	if session == nil || !ss.IsValidSession(session.Token) {
+		return ss.newSession(uid)
 	}
 
-	expiry, err := token.Claims.GetExpirationTime()
-	if err != nil {
-		ss.logger.Error("jwt get expiry", "err", err)
-		return false, ""
-	}
+	return session.Token, nil
+}
 
-	claims, ok := token.Claims.(jwtClaims)
+func (ss *SessionService) IsValidSession(token string) bool {
+	ss.mux.Lock()
+	defer ss.mux.Unlock()
+
+	session, ok := ss.sessions[token]
+
 	if !ok {
-		return false, ""
+		return false
 	}
 
-	return expiry.Before(time.Now()) && token.Valid, claims.Uid
+	if session.Expiry.Before(time.Now()) {
+		delete(ss.sessions, token)
+		return false
+	}
+
+	return true
+}
+
+// GetSession fetches the users session from the active sessions.
+// This method will return nil if the session is no longer active.
+func (ss *SessionService) GetSession(uid string) *Session {
+	ss.mux.Lock()
+	defer ss.mux.Unlock()
+
+	for _, session := range ss.sessions {
+		if session.UserId == uid {
+			return session
+		}
+	}
+
+	return nil
 }
