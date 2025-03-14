@@ -35,7 +35,7 @@ func main() {
 
 	authService := services.NewAuthService(repo, hasher, ss)
 
-	userController := controllers.NewUsers(logger, authService)
+	userController := controllers.NewUsers(logger, authService, ss)
 
 	r := chi.NewRouter()
 

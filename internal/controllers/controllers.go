@@ -19,11 +19,11 @@ type LoggingDecorator struct {
 	logger logging.Logger
 }
 
+type Handler func(w http.ResponseWriter, r *http.Request) error
+
 func NewLoggingDecorator(logger logging.Logger) *LoggingDecorator {
 	return &LoggingDecorator{logger}
 }
-
-type Handler func(w http.ResponseWriter, r *http.Request) error
 
 func getFunctionName(unc any) string {
 	strs := strings.Split((runtime.FuncForPC(reflect.ValueOf(unc).Pointer()).Name()), ".")

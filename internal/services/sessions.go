@@ -10,91 +10,92 @@ import (
 
 // TODO: Idea: Instead of the implementation i have how about we create a object for each user so that I can bind tokens to the user directly and not only that see if theres state that one of the tokens are being used for a file upload.
 
-const sessionDuration = time.Duration(10 * time.Minute)
+const idleDuration = time.Duration(30 * time.Minute)
 
 type Session struct {
-	Token     string    `json:"token"`
-	UserId    string    `json:"uid"`
-	Expiry    time.Time `json:"expiry"`
-	CreatedAt time.Time `json:"created_at"`
+	Uid        string    `json:"uid"`
+	LastActive time.Time `json:"last_active"`
 }
 
 type SessionService struct {
 	logger logging.Logger
 
-	mux      sync.Mutex
-	sessions map[string]*Session // I should take a deeper look into the sync.Map implementation
+	mux         sync.Mutex
+	activeUsers map[string]string
+	sessions    map[string]*Session
 }
 
 func NewSessionService(logger logging.Logger) *SessionService {
 	return &SessionService{
-		logger:   logger,
-		sessions: make(map[string]*Session),
+		logger:      logger,
+		activeUsers: make(map[string]string),
+		sessions:    make(map[string]*Session),
 	}
 }
 
-func (ss *SessionService) newSession(uid string) (string, error) {
+func (ss *SessionService) Login(uid string) (string, error) {
 	token, err := uuid.NewV7()
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 
-	now := time.Now()
-
 	session := &Session{
-		Token:     token.String(),
-		UserId:    uid,
-		Expiry:    now.Add(sessionDuration),
-		CreatedAt: now,
+		Uid:        uid,
+		LastActive: time.Now(),
 	}
 
 	ss.mux.Lock()
 	defer ss.mux.Unlock()
 
+	if otherToken, ok := ss.activeUsers[uid]; ok {
+		delete(ss.sessions, otherToken)
+	}
+
+	ss.activeUsers[uid] = token.String()
 	ss.sessions[token.String()] = session
 
 	return token.String(), nil
 }
 
-// GetSessionToken will return a new session token or a already existing session token for the user.
-func (ss *SessionService) GetSessionToken(uid string) (string, error) {
-	session := ss.GetSession(uid)
-	if session == nil || !ss.IsValidSession(session.Token) {
-		return ss.newSession(uid)
-	}
-
-	return session.Token, nil
-}
-
-func (ss *SessionService) IsValidSession(token string) bool {
+func (ss *SessionService) Logout(token string) {
 	ss.mux.Lock()
 	defer ss.mux.Unlock()
 
 	session, ok := ss.sessions[token]
+	if ok {
+		delete(ss.activeUsers, session.Uid)
+	}
 
-	if !ok {
+	delete(ss.sessions, token)
+}
+
+func (ss *SessionService) sessionIsExpired(session *Session) bool {
+	return session.LastActive.Add(idleDuration).After(time.Now())
+}
+
+func (ss *SessionService) Authorize(token string) bool {
+	ss.mux.Lock()
+	defer ss.mux.Unlock()
+
+	session, ok := ss.sessions[token]
+	if !ok || ss.sessionIsExpired(session) {
 		return false
 	}
 
-	if session.Expiry.Before(time.Now()) {
-		delete(ss.sessions, token)
-		return false
-	}
+	session.LastActive = time.Now()
 
 	return true
 }
 
-// GetSession fetches the users session from the active sessions.
-// This method will return nil if the session is no longer active.
-func (ss *SessionService) GetSession(uid string) *Session {
+func (ss *SessionService) GetSessions() map[string]Session {
+	ret := make(map[string]Session, len(ss.sessions))
+
 	ss.mux.Lock()
 	defer ss.mux.Unlock()
 
-	for _, session := range ss.sessions {
-		if session.UserId == uid {
-			return session
-		}
+	for key, val := range ss.sessions {
+		ret[key] = *val
 	}
 
-	return nil
+	return ret
 }

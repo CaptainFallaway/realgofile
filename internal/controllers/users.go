@@ -12,11 +12,12 @@ import (
 type userController struct {
 	logger logging.Logger
 
-	authService *services.AuthService
+	authService    *services.AuthService
+	sessionService *services.SessionService
 }
 
-func NewUsers(logger logging.Logger, auth *services.AuthService) Controller {
-	return &userController{logger, auth}
+func NewUsers(logger logging.Logger, auth *services.AuthService, sessions *services.SessionService) Controller {
+	return &userController{logger, auth, sessions}
 }
 
 func (u *userController) SetupRoutes(router chi.Router) {
@@ -24,6 +25,7 @@ func (u *userController) SetupRoutes(router chi.Router) {
 
 	router.Post("/login", ld.Decorate(u.Login))
 	router.Post("/register", ld.Decorate(u.Register))
+	router.Get("/sessions", ld.Decorate(u.GetSessions))
 }
 
 func (u *userController) Login(w http.ResponseWriter, r *http.Request) error {
@@ -67,4 +69,17 @@ func (u *userController) Register(w http.ResponseWriter, r *http.Request) error 
 	u.logger.Debug("successful registration", "user", username, "ip", r.RemoteAddr)
 
 	return err
+}
+
+func (u *userController) GetSessions(w http.ResponseWriter, r *http.Request) error {
+	sessions := u.sessionService.GetSessions()
+
+	err := WriteJson(w, sessions)
+
+	if err != nil {
+		WriteError(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
 }
