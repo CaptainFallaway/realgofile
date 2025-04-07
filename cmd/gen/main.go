@@ -19,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	hasher := hashing.NewArgonBcryptHasher()
+	hasher := hashing.NewDefaultArgonBcryptHasher()
 
 	app := NewAbstraction(repo, hasher)
 

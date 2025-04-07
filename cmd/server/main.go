@@ -29,7 +29,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	hasher := hashing.NewArgonBcryptHasher()
+	hasher := hashing.NewDefaultArgonBcryptHasher()
 
 	ss := services.NewSessionService(logger)
 
